@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sri Chaitanya | Punctuality Dashboard</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+* { box-sizing: border-box; margin:0; padding:0; }
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: url("bg.jpg") no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    color: white;
+}
+
+/* Header */
+header {
+    background: #0b3d91;
+    color: white;
+    padding: 1.2rem;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+}
+
+/* Layout */
+main {
+    max-width: 1100px;
+    margin: 2.5rem auto;
+    padding: 0 1.5rem;
+}
+
+/* Transparent Container */
+.dashboard-card {
+    background: transparent;
+    padding: 2rem;
+}
+
+/* Title + Stats */
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.main-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.stat-box {
+    background: rgba(0,0,0,0.6);
+    padding: 0.8rem 1.2rem;
+    border-radius: 10px;
+}
+
+.stat-box.late {
+    background: rgba(220,38,38,0.9);
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-box {
+    flex: 1;
+    position: relative;
+    min-width: 220px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.7rem 1rem 0.7rem 2.5rem;
+    border-radius: 10px;
+    border: none;
+}
+
+.search-box i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: black;
+}
+
+select, button {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+}
+
+button.primary {
+    background: #0b3d91;
+    color: white;
+    font-weight: bold;
+}
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #0b3d91;
+    padding: 10px;
+    text-align: left;
+}
+
+td {
+    padding: 10px;
+}
+
+/* Status Colors */
+.status-select {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    color: white;
+}
+
+.status-ontime { background: #16a34a; }
+.status-late   { background: #dc2626; }
+
+/* Late Panel */
+#latePanel {
+    position: fixed;
+    top: 5rem;
+    right: 1.5rem;
+    width: 330px;
+    max-height: 80vh;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    overflow: hidden;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+}
+
+#latePanel.open {
+    transform: translateX(0);
+}
+
+.late-header {
+    background: #dc2626;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+
+.late-body {
+    padding: 1rem;
+}
+
+.late-item {
+    padding: 0.8rem 1rem;
+    background: #fee2e2;
+    border-radius: 8px;
+    margin-bottom: 0.6rem;
+    color: #b91c1c;
+    font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<header>Sri Chaitanya Dashboard</header>
+
+<main>
+<div class="dashboard-card">
+
+<div class="header-row">
+<div class="main-title">Student Punctuality Analysis</div>
+<div class="stats" id="stats"></div>
+</div>
+
+<div class="controls">
+<div class="search-box">
+<i class="fas fa-search"></i>
+<input type="text" id="searchInput" placeholder="Search student name...">
+</div>
+
+<select id="gradeFilter">
+<option value="All">All Grades</option>
+<option value="6">Grade 6</option>
+<option value="7">Grade 7</option>
+<option value="8">Grade 8</option>
+<option value="9">Grade 9</option>
+<option value="10">Grade 10</option>
+</select>
+
+<select id="sectionFilter">
+<option value="All">All Sections</option>
+<option value="A">A</option>
+<option value="B">B</option>
+<option value="C">C</option>
+</select>
+
+<button class="primary" onclick="showLateComers()">Latecomers</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Grade–Section</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+
+<div style="text-align:center; margin-top:2rem;">
+<button class="primary" onclick="showLateComers()">💾 Save Attendance & Show Latecomers</button>
+</div>
+
+</div>
+</main>
+
+<div id="latePanel">
+<div class="late-header">
+<h3>Latecomers</h3>
+<button class="close-btn" onclick="closeLatePanel()">×</button>
+</div>
+<div class="late-body" id="lateBody"></div>
+</div>
+
+<script>
+const students=[
+{ id:1,name:"Arjun Mehta",grade:"6",section:"A",status:"On-Time"},
+{ id:2,name:"Sneha Rao",grade:"7",section:"B",status:"Late"},
+{ id:3,name:"Rohan Das",grade:"8",section:"C",status:"On-Time"},
+{ id:4,name:"Priya Sharma",grade:"9",section:"A",status:"Late"},
+{ id:5,name:"Vikram Singh",grade:"10",section:"B",status:"On-Time"}
+];
+
+function renderTable(){
+const search=document.getElementById("searchInput").value.toLowerCase();
+const grade=document.getElementById("gradeFilter").value;
+const sec=document.getElementById("sectionFilter").value;
+const tbody=document.getElementById("tableBody");
+tbody.innerHTML="";
+
+students.filter(s=>{
+return s.name.toLowerCase().includes(search)&&
+(grade==="All"||s.grade===grade)&&
+(sec==="All"||s.section===sec);
+}).forEach(s=>{
+const tr=document.createElement("tr");
+const cls=s.status==="On-Time"?"status-ontime":"status-late";
+tr.innerHTML=`
+<td>${s.name}</td>
+<td>${s.grade}-${s.section}</td>
+<td>
+<select class="status-select ${cls}" data-id="${s.id}">
+<option value="On-Time" ${s.status==="On-Time"?"selected":""}>On-Time</option>
+<option value="Late" ${s.status==="Late"?"selected":""}>Late</option>
+</select>
+</td>`;
+tr.querySelector("select").onchange=e=>{
+const stu=students.find(x=>x.id==e.target.dataset.id);
+stu.status=e.target.value;
+e.target.className="status-select "+(stu.status==="On-Time"?"status-ontime":"status-late");
+updateStats();
+};
+tbody.appendChild(tr);
+});
+updateStats();
+}
+
+function updateStats(){
+const total=students.length;
+const late=students.filter(s=>s.status==="Late").length;
+const ontime=total-late;
+document.getElementById("stats").innerHTML=
+`<div class="stat-box">Total: ${total}</div>
+<div class="stat-box">On-Time: ${ontime}</div>
+<div class="stat-box late">Late: ${late}</div>`;
+}
+
+function showLateComers(){
+const late=students.filter(s=>s.status==="Late");
+const container=document.getElementById("lateBody");
+container.innerHTML="";
+if(late.length===0){
+container.innerHTML="<div style='text-align:center;padding:2rem;font-weight:bold;'>No Latecomers 🎉</div>";
+}else{
+late.forEach((s,index)=>{
+container.innerHTML+=
+`<div class="late-item">${index+1}. ${s.name}</div>`;
+});
+}
+document.getElementById("latePanel").classList.add("open");
+}
+
+function closeLatePanel(){
+document.getElementById("latePanel").classList.remove("open");
+}
+
+document.getElementById("searchInput").oninput=renderTable;
+document.getElementById("gradeFilter").onchange=renderTable;
+document.getElementById("sectionFilter").onchange=renderTable;
+
+renderTable();
+</script>
+
+</body>
+</html>
